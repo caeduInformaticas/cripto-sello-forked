@@ -3,6 +3,8 @@ import './App.css'
 import BlockchainPanel from './components/BlockchainPanel'
 import PropertyRegistrationFormSimple from './components/PropertyRegistrationFormSimple'
 import PinataSetup from './components/PinataSetup'
+import DDRRPanel from './components/DDRRPanel'
+import csLogo from './assets/cs-logo.png'
 
 // Context para el estado global
 const AppContext = createContext()
@@ -28,8 +30,6 @@ function App() {
 
   const renderView = () => {
     switch (currentView) {
-      case 'consulta':
-        return <ConsultaPublica />
       case 'notaria':
         return <NotariaPanel />
       case 'ddrr':
@@ -58,15 +58,9 @@ const Homepage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-blue-600 rounded"></div>
+              <img src={csLogo} alt="CriptoSello Logo" className="h-8 w-8" />
               <h1 className="text-2xl font-bold text-gray-900">CriptoSello</h1>
             </div>
-            <button 
-              onClick={() => setCurrentView('consulta')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Consulta Pública
-            </button>
           </div>
         </div>
       </header>
@@ -81,23 +75,14 @@ const Homepage = () => {
             registro y validación de propiedades usando blockchain.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            <div className="bg-white p-6 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                 onClick={() => setCurrentView('home')}>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-blue-600 text-xl">👥</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Propietarios</h3>
-              <p className="text-gray-600">Registra y da seguimiento a tus propiedades</p>
-            </div>
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-2xl mx-auto">
             <div className="bg-white p-6 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                  onClick={() => setCurrentView('notaria')}>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 text-xl">🛡️</span>
+                <span className="text-green-600 text-xl">�️</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">Notarías</h3>
-              <p className="text-gray-600">Valida documentos y autoriza registros</p>
+              <p className="text-gray-600">Valida documentos y autoriza registros de propiedades</p>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -106,7 +91,7 @@ const Homepage = () => {
                 <span className="text-purple-600 text-xl">🏢</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">DDRR</h3>
-              <p className="text-gray-600">Registra oficialmente las propiedades</p>
+              <p className="text-gray-600">Registra oficialmente propiedades validadas por notarías</p>
             </div>
           </div>
         </div>
@@ -115,49 +100,6 @@ const Homepage = () => {
   )
 }
 
-// Componente ConsultaPublica
-const ConsultaPublica = () => {
-  const { setCurrentView } = useAppContext()
-
-  return (
-    <>
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-blue-600 rounded"></div>
-              <h1 className="text-2xl font-bold text-gray-900">CriptoSello</h1>
-              <span className="text-sm text-gray-500">- Consulta Pública</span>
-            </div>
-            <button 
-              onClick={() => setCurrentView('home')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-            >
-              Volver al Inicio
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Consulta Pública de Propiedades
-            </h2>
-            <p className="text-lg text-gray-600">
-              Verifica el estado y la información de cualquier propiedad registrada en la blockchain.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <BlockchainPanel userRole="OBSERVADOR" />
-          </div>
-        </div>
-      </main>
-    </>
-  )
-}
 
 // Componente NotariaPanel
 const NotariaPanel = () => {
@@ -169,7 +111,7 @@ const NotariaPanel = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-green-600 rounded"></div>
+              <img src={csLogo} alt="CriptoSello Logo" className="h-8 w-8" />
               <h1 className="text-2xl font-bold text-gray-900">CriptoSello</h1>
               <span className="text-sm text-gray-500">- Panel Notaría</span>
             </div>
@@ -240,50 +182,6 @@ const NotariaPanel = () => {
                 }
               }}
             />
-          </div>
-        </div>
-      </main>
-    </>
-  )
-}
-
-// Componente DDRRPanel
-const DDRRPanel = () => {
-  const { setCurrentView } = useAppContext()
-
-  return (
-    <>
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-purple-600 rounded"></div>
-              <h1 className="text-2xl font-bold text-gray-900">CriptoSello</h1>
-              <span className="text-sm text-gray-500">- Panel DDRR</span>
-            </div>
-            <button 
-              onClick={() => setCurrentView('home')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-            >
-              Volver al Inicio
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Panel de Derechos Reales (DDRR)
-            </h2>
-            <p className="text-lg text-gray-600">
-              Registra oficialmente las propiedades validadas en la blockchain.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <BlockchainPanel userRole="DDRR" />
           </div>
         </div>
       </main>

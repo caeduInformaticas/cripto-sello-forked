@@ -319,7 +319,7 @@ class BlockchainService {
     const contract = this.getContract(true); // Requiere signer
     try {
       // Validar y convertir tokenId de forma segura
-      const validTokenId = this.validateTokenId(tokenId);
+      const validTokenId = tokenId.toString();
       
       console.log(`🔍 Registrando propiedad con Token ID: ${validTokenId}`);
       

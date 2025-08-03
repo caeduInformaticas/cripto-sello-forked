@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, Shield, Users, Search, FileText, CheckCircle } from 'lucide-react'
+import csLogo from '../assets/cs-logo.png'
 
 const Homepage = () => {
   return (
@@ -11,15 +12,9 @@ const Homepage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <Building2 className="h-8 w-8 text-blue-600" />
+              <img src={csLogo} alt="CriptoSello Logo" className="h-8 w-8" />
               <h1 className="text-2xl font-bold text-gray-900">CriptoSello</h1>
             </div>
-            <Link to="/consulta">
-              <Button variant="outline" className="flex items-center space-x-2">
-                <Search className="h-4 w-4" />
-                <span>Consulta Pública</span>
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -63,27 +58,7 @@ const Homepage = () => {
             Accede según tu Rol
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Propietario */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Users className="h-8 w-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">Soy Propietario</CardTitle>
-                <CardDescription>
-                  Registra y da seguimiento a tus propiedades
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/auth?role=PROPIETARIO" className="w-full">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Acceder
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {/* Notaría */}
             <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
               <CardHeader className="text-center">
@@ -92,7 +67,7 @@ const Homepage = () => {
                 </div>
                 <CardTitle className="text-xl">Soy Notaría</CardTitle>
                 <CardDescription>
-                  Valida documentos y autoriza registros
+                  Valida documentos y autoriza registros de propiedades
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -112,33 +87,13 @@ const Homepage = () => {
                 </div>
                 <CardTitle className="text-xl">Soy DDRR</CardTitle>
                 <CardDescription>
-                  Registra oficialmente las propiedades
+                  Registra oficialmente propiedades validadas por notarías
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link to="/auth?role=DDRR" className="w-full">
+                <Link to="/ddrr" className="w-full">
                   <Button className="w-full bg-purple-600 hover:bg-purple-700">
                     Acceder
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Observador */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-gray-200 transition-colors">
-                  <Search className="h-8 w-8 text-gray-600" />
-                </div>
-                <CardTitle className="text-xl">Consulta Pública</CardTitle>
-                <CardDescription>
-                  Verifica información de propiedades
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/consulta" className="w-full">
-                  <Button variant="outline" className="w-full">
-                    Consultar
                   </Button>
                 </Link>
               </CardContent>
@@ -192,7 +147,7 @@ const Homepage = () => {
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-4xl mx-auto text-center px-4">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <Building2 className="h-6 w-6" />
+            <img src={csLogo} alt="CriptoSello Logo" className="h-6 w-6" />
             <span className="text-xl font-bold">CriptoSello</span>
           </div>
           <p className="text-gray-400">

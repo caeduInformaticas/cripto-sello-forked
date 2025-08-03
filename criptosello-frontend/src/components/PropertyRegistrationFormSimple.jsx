@@ -846,7 +846,7 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
                 <Textarea
                   id="description"
                   name="description"
-                  placeholder="Ej: Casa unifamiliar de 150m², ubicada en Zona Sur, La Paz. Cuenta con 3 dormitorios, 2 baños, sala, comedor y garaje."
+                  placeholder="Ej: Casa unifamiliar de 150m², ubicada en av. Roca y Coronado, Santa Cruz. Cuenta con 3 dormitorios, 2 baños, sala, comedor y garaje."
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={4}
