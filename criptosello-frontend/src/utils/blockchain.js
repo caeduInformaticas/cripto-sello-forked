@@ -42,13 +42,17 @@ class BlockchainService {
   }
 
   // Mint (solo notaría) - mintea propiedad y retorna tokenId
-  async mintProperty(to, uri) {
+  async mintProperty(to, documentId, uri) {
     if (!this.contract) throw new Error('Contrato no inicializado');
     try {
-      const tx = await this.contract.mintProperty(to, uri);
+      console.log('Calling mintProperty with:', { to, documentId, uri });
+      
+      // Llamar al método mint del contrato que ahora retorna el tokenId directamente
+      const tx = await this.contract.mintProperty(to, documentId, uri);
       const receipt = await tx.wait();
 
-      // Extraer el tokenId del evento Transfer (ERC721)
+      // El método mintProperty ahora retorna el tokenId, así que podemos obtenerlo de los eventos
+      // Buscar el evento Transfer para obtener el tokenId
       const transferEvent = receipt.logs
         .map(log => {
           try {
@@ -58,11 +62,34 @@ class BlockchainService {
           }
         })
         .find(log => log && log.name === 'Transfer');
+      
       const tokenId = transferEvent ? transferEvent.args.tokenId.toString() : null;
 
+      if (!tokenId) {
+        throw new Error('No se pudo obtener el tokenId del evento Transfer');
+      }
+
+      console.log('Property minted successfully:', { tokenId, txHash: tx.hash });
       return { tx, tokenId };
     } catch (error) {
       console.error('Error minteando propiedad:', error);
+      throw error;
+    }
+  }
+
+  // Generar tokenId de forma local (para validación previa)
+  async generateTokenId(to, documentId, uri) {
+    if (!this.contract) throw new Error('Contrato no inicializado');
+    try {
+      // Usar la misma lógica que el contrato para generar el tokenId
+      const encoded = ethers.solidityPacked(
+        ['address', 'uint256', 'string'],
+        [to, documentId, uri]
+      );
+      const hash = ethers.keccak256(encoded);
+      return ethers.toBigInt(hash).toString();
+    } catch (error) {
+      console.error('Error generando tokenId:', error);
       throw error;
     }
   }
@@ -100,7 +127,7 @@ class BlockchainService {
       const data = await this.contract.getPropertyInfo(tokenId);
       return {
         owner: data[0],
-        state: data[1],  // 0, 1, 2
+        state: Number(data[1]),  // Convertir a número para el enum
         uri: data[2],
       };
     } catch (error) {
@@ -115,14 +142,24 @@ class BlockchainService {
     return await this.contract.ownerOf(tokenId);
   }
 
-  // Obtener estados legibles
+  // Obtener estados legibles según el nuevo enum
   getPropertyStateText(state) {
     const states = {
-      0: 'En Notaría',
-      1: 'Validado',
-      2: 'Registrado'
+      0: 'En Notaría',      // IN_NOTARY
+      1: 'Validado',        // VALIDATED
+      2: 'Registrado'       // REGISTERED
     };
     return states[state] || 'Desconocido';
+  }
+
+  // Verificar si existe una propiedad
+  async propertyExists(tokenId) {
+    try {
+      await this.contract.ownerOf(tokenId);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

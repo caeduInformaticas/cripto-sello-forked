@@ -7,16 +7,23 @@ import { Textarea } from './ui/textarea'
 import { Alert, AlertDescription } from './ui/alert'
 import PDFUploader from './PDFUploader'
 import pinataService from '../services/pinataService'
+import blockchainService from '../utils/blockchain'
 
 const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
   const [formData, setFormData] = useState({
     carnetIdentidad: '',
-    description: ''
+    description: '',
+    documentId: ''
   })
   
   const [documentInfo, setDocumentInfo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
+  
+  // Estados para blockchain
+  const [walletAddress, setWalletAddress] = useState('')
+  const [isWalletConnected, setIsWalletConnected] = useState(false)
+  const [blockchainLoading, setBlockchainLoading] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -32,6 +39,9 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
       if (name === 'carnetIdentidad') {
         // Limpiar error cuando tiene al menos 7 dígitos y son solo números
         shouldClearError = value.trim().length >= 7 && /^[0-9]+$/.test(value.trim())
+      } else if (name === 'documentId') {
+        // Limpiar error cuando son solo números
+        shouldClearError = value.trim().length > 0 && /^[0-9]+$/.test(value.trim())
       } else if (name === 'description') {
         // Limpiar error cuando tiene al menos 10 caracteres
         shouldClearError = value.trim().length >= 10
@@ -50,6 +60,21 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
     setDocumentInfo(result)
   }
 
+  const connectWallet = async () => {
+    try {
+      setBlockchainLoading(true)
+      const address = await blockchainService.connectWallet()
+      setWalletAddress(address)
+      setIsWalletConnected(true)
+      console.log('Wallet conectada:', address)
+    } catch (error) {
+      console.error('Error conectando wallet:', error)
+      alert(`Error conectando wallet: ${error.message}`)
+    } finally {
+      setBlockchainLoading(false)
+    }
+  }
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -60,6 +85,13 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
       newErrors.carnetIdentidad = 'Carnet de identidad debe contener solo números'
     } else if (formData.carnetIdentidad.trim().length < 7) {
       newErrors.carnetIdentidad = 'Carnet de identidad debe tener al menos 7 dígitos'
+    }
+
+    // Validar documentId
+    if (!formData.documentId.trim()) {
+      newErrors.documentId = 'ID del documento es requerido'
+    } else if (!/^[0-9]+$/.test(formData.documentId.trim())) {
+      newErrors.documentId = 'ID del documento debe contener solo números'
     }
 
     // Validar descripción
@@ -85,6 +117,12 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
       return
     }
 
+    // Verificar conexión de wallet si no estamos en modo demo
+    if (!pinataService.isDemoMode() && !isWalletConnected) {
+      alert('Primero debes conectar tu wallet para registrar la propiedad en la blockchain')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -98,17 +136,43 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
 
       console.log('Metadatos creados:', metadataResult)
 
+      let tokenId = null
+      let txHash = null
+
+      // Si no estamos en modo demo, hacer mint en el contrato
+      if (!pinataService.isDemoMode()) {
+        try {
+          console.log('Minteando NFT en la blockchain...')
+          // Convertir documentId a número para el contrato
+          const documentIdNumber = parseInt(formData.documentId.trim())
+          const mintResult = await blockchainService.mintProperty(walletAddress, documentIdNumber, metadataResult.url)
+          tokenId = mintResult.tokenId
+          txHash = mintResult.tx.hash
+          console.log('NFT minteado exitosamente:', { tokenId, txHash })
+        } catch (blockchainError) {
+          console.error('Error en blockchain:', blockchainError)
+          alert(`Error al mintear en la blockchain: ${blockchainError.message}`)
+          return
+        }
+      }
+
       // Preparar datos para el contrato (mint)
       const contractData = {
         // Datos para la función mint del contrato
         tokenURI: metadataResult.url, // URI de IPFS para los metadatos
         carnetIdentidad: formData.carnetIdentidad,
+        documentId: formData.documentId,
         description: formData.description,
         
         // Información adicional
         metadataHash: metadataResult.ipfsHash,
         documentHash: documentInfo.ipfsHash,
         documentUrl: documentInfo.url,
+        
+        // Información de blockchain
+        tokenId: tokenId,
+        transactionHash: txHash,
+        ownerAddress: walletAddress,
         
         // Metadatos completos
         metadata: metadataResult.metadata,
@@ -125,11 +189,16 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
       }
 
       // Mostrar éxito
-      alert(
-        pinataService.isDemoMode() 
-          ? '✅ Propiedad registrada en modo demo exitosamente'
-          : '✅ Propiedad registrada exitosamente. Los datos están listos para el mint del contrato.'
-      )
+      if (pinataService.isDemoMode()) {
+        alert('✅ Propiedad registrada en modo demo exitosamente')
+      } else {
+        alert(`✅ Propiedad registrada exitosamente en la blockchain!\n\nToken ID: ${tokenId}\nTransacción: ${txHash}\nURI de metadatos: ${metadataResult.url}`)
+      }
+
+      // Limpiar formulario
+      setFormData({ carnetIdentidad: '', description: '', documentId: '' })
+      setDocumentInfo(null)
+      setErrors({})
 
     } catch (error) {
       console.error('Error al registrar propiedad:', error)
@@ -143,6 +212,7 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
     // Verificar que los campos requeridos tengan contenido
     const hasRequiredFields = formData.carnetIdentidad.trim() && 
                               formData.description.trim() && 
+                              formData.documentId.trim() &&
                               documentInfo
 
     // Solo considerar errores críticos que impiden el envío
@@ -157,7 +227,10 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
       )
     })
 
-    return hasRequiredFields && !hasCriticalErrors
+    // Verificar conexión de wallet si no estamos en modo demo
+    const walletRequirement = pinataService.isDemoMode() || isWalletConnected
+
+    return hasRequiredFields && !hasCriticalErrors && walletRequirement
   }
 
   return (
@@ -191,6 +264,29 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
               )}
               <p className="text-xs text-gray-500">
                 Ingresa el número de carnet de identidad del propietario
+              </p>
+            </div>
+
+            {/* ID del Documento */}
+            <div className="space-y-2">
+              <Label htmlFor="documentId">
+                ID del Documento *
+              </Label>
+              <Input
+                id="documentId"
+                name="documentId"
+                type="text"
+                placeholder="Ej: 123456"
+                value={formData.documentId}
+                onChange={handleInputChange}
+                className={errors.documentId ? 'border-red-500' : ''}
+                disabled={loading}
+              />
+              {errors.documentId && (
+                <p className="text-sm text-red-600">{errors.documentId}</p>
+              )}
+              <p className="text-xs text-gray-500">
+                Ingresa el ID único del documento (número catastral, registro, etc.)
               </p>
             </div>
 
@@ -239,6 +335,46 @@ const PropertyRegistrationFormSimple = ({ onRegistrationComplete }) => {
                   Para usar IPFS real, configura tus credenciales de Pinata.
                 </AlertDescription>
               </Alert>
+            )}
+
+            {/* Conexión de Wallet */}
+            {!pinataService.isDemoMode() && (
+              <div className="space-y-3">
+                <Label>Conexión de Wallet</Label>
+                {!isWalletConnected ? (
+                  <div className="space-y-2">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={connectWallet}
+                      disabled={blockchainLoading}
+                      className="w-full"
+                    >
+                      {blockchainLoading ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                          <span>Conectando...</span>
+                        </div>
+                      ) : (
+                        '🦊 Conectar MetaMask'
+                      )}
+                    </Button>
+                    <p className="text-xs text-gray-500">
+                      Conecta tu wallet para registrar la propiedad en la blockchain
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-800">Wallet Conectada</span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">
+                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Botón de envío */}
