@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import CriptoSelloABI from './CriptoSello.json';
 
 // Configuración del contrato
-const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const CONTRACT_ADDRESS = '0x0864B645Bdc3501326ea698F34CA9BF88d58B3f9';
 const RPC_URL = 'http://localhost:8545';
 
 class BlockchainService {
