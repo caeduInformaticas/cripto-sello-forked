@@ -1,6 +1,8 @@
 import { useState, createContext, useContext } from 'react'
 import './App.css'
 import BlockchainPanel from './components/BlockchainPanel'
+import PropertyRegistrationFormSimple from './components/PropertyRegistrationFormSimple'
+import PinataSetup from './components/PinataSetup'
 
 // Context para el estado global
 const AppContext = createContext()
@@ -187,13 +189,54 @@ const NotariaPanel = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Panel de Notaría
             </h2>
-            <p className="text-lg text-gray-600">
-              Gestiona la validación de documentos y el registro de propiedades en la blockchain.
+            <p className="text-lg text-gray-600 mb-6">
+              Registra nuevas propiedades y gestiona el proceso completo de certificación en la blockchain.
             </p>
+            
+            {/* Información del proceso */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-green-800">
+                Proceso de Registro con Pinata Cloud
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-green-600 font-bold text-lg">1</span>
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Crear Metadatos</h4>
+                  <p className="text-sm text-gray-600">
+                    Sube documentos e imágenes a IPFS y crea metadatos completos de la propiedad
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-blue-600 font-bold text-lg">2</span>
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Mintear NFT</h4>
+                  <p className="text-sm text-gray-600">
+                    Crear el NFT de la propiedad con estado "EN_NOTARIA" usando el contrato
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-purple-600 font-bold text-lg">3</span>
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Validar y Registrar</h4>
+                  <p className="text-sm text-gray-600">
+                    Revisar documentación, validar y enviar a DDRR para registro oficial
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <BlockchainPanel userRole="NOTARIA" />
+            <PropertyRegistrationFormSimple 
+              onRegistrationComplete={(contractData) => {
+                console.log('Registro desde homepage:', contractData)
+                alert(`Propiedad registrada desde homepage:\nURI: ${contractData.tokenURI}\nCI: ${contractData.carnetIdentidad}`)
+              }}
+            />
           </div>
         </div>
       </main>

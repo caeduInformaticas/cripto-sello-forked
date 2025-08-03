@@ -154,6 +154,11 @@
         "type": "address"
       },
       {
+        "internalType": "uint256",
+        "name": "documentId",
+        "type": "uint256"
+      },
+      {
         "internalType": "string",
         "name": "uri",
         "type": "string"
@@ -163,7 +168,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],

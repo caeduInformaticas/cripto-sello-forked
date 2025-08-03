@@ -96,7 +96,7 @@ const Homepage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link to="/auth?role=NOTARIA" className="w-full">
+                <Link to="/notaria" className="w-full">
                   <Button className="w-full bg-green-600 hover:bg-green-700">
                     Acceder
                   </Button>

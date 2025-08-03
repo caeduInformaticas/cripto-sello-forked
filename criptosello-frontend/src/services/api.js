@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:5000'
 
 class ApiService {
   async request(endpoint, options = {}) {
@@ -93,6 +93,27 @@ class ApiService {
 
   async getEstadisticas() {
     return this.request('/api/consulta/estadisticas')
+  }
+
+  // IPFS/Pinata endpoints
+  async uploadFileToIPFS(file, metadata = {}) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('metadata', JSON.stringify(metadata))
+
+    return this.request('/api/ipfs/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {} // Eliminar Content-Type para FormData
+    })
+  }
+
+  async getIPFSFile(cid) {
+    return this.request(`/api/ipfs/file/${cid}`)
+  }
+
+  async validateIPFSHash(hash) {
+    return this.request(`/api/ipfs/validate/${hash}`)
   }
 }
 

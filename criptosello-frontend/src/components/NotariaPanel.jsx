@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../App'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Building2, ArrowLeft, LogOut, Shield, FileText, Blockchain } from 'lucide-react'
+import { Building2, ArrowLeft, LogOut, Shield, FileText, Blockchain, Plus } from 'lucide-react'
 import BlockchainPanel from './BlockchainPanel'
+import PropertyRegistrationFormSimple from './PropertyRegistrationFormSimple'
+import PinataSetup from './PinataSetup'
 
 const NotariaPanel = () => {
   const { user, setUser, propiedades, loadPropiedades, loading } = useAppContext()
@@ -78,8 +80,16 @@ const NotariaPanel = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="blockchain" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="registro" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="registro" className="flex items-center space-x-2">
+                <Plus className="h-4 w-4" />
+                <span>Nuevo Registro</span>
+              </TabsTrigger>
+              <TabsTrigger value="configuracion" className="flex items-center space-x-2">
+                <Building2 className="h-4 w-4" />
+                <span>Config IPFS</span>
+              </TabsTrigger>
               <TabsTrigger value="blockchain" className="flex items-center space-x-2">
                 <Blockchain className="h-4 w-4" />
                 <span>Blockchain</span>
@@ -93,6 +103,74 @@ const NotariaPanel = () => {
                 <span>Validadas ({propiedadesValidadas.length})</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Panel de Registro de Nueva Propiedad */}
+            <TabsContent value="registro">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registro de Nueva Propiedad</CardTitle>
+                  <CardDescription>
+                    Complete el formulario para crear un NFT de propiedad con metadatos almacenados en IPFS
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Información del proceso */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-800 mb-2">
+                        Proceso de Registro con Pinata Cloud
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span className="text-green-600 font-bold">1</span>
+                          </div>
+                          <p className="font-medium text-green-800">Crear Metadatos</p>
+                          <p className="text-green-600">Sube archivos a IPFS y crea metadatos completos</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span className="text-blue-600 font-bold">2</span>
+                          </div>
+                          <p className="font-medium text-blue-800">Mintear NFT</p>
+                          <p className="text-blue-600">Crear el NFT con estado "EN_NOTARIA"</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <span className="text-purple-600 font-bold">3</span>
+                          </div>
+                          <p className="font-medium text-purple-800">Validar</p>
+                          <p className="text-purple-600">Revisar y validar para enviar a DDRR</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Formulario de Registro */}
+                    <PropertyRegistrationFormSimple 
+                      onRegistrationComplete={(contractData) => {
+                        console.log('Registro desde notaría:', contractData)
+                        alert(`Propiedad registrada desde notaría:\nURI: ${contractData.tokenURI}\nCI: ${contractData.carnetIdentidad}`)
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Configuración de Pinata */}
+            <TabsContent value="configuracion">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configuración IPFS</CardTitle>
+                  <CardDescription>
+                    Configura las credenciales de Pinata Cloud para almacenamiento IPFS
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PinataSetup />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Panel de Blockchain */}
             <TabsContent value="blockchain">

@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../App'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
 import { 
   Building2, 
   Upload, 
@@ -18,18 +14,15 @@ import {
   LogOut,
   User
 } from 'lucide-react'
+import PropertyRegistrationFormSimple from './PropertyRegistrationFormSimple'
+import PinataSetup from './PinataSetup'
 
 const PropietarioPanel = () => {
   const navigate = useNavigate()
   const { user, setUser, propiedades, loadPropiedades, apiService } = useAppContext()
   
   const [showNewPropertyForm, setShowNewPropertyForm] = useState(false)
-  const [newProperty, setNewProperty] = useState({
-    direccion: '',
-    folioReal: '',
-    descripcion: '',
-    documentos: []
-  })
+  const [showPinataSetup, setShowPinataSetup] = useState(false)
 
   useEffect(() => {
     if (!user || user.rol !== 'PROPIETARIO') {
@@ -42,74 +35,44 @@ const PropietarioPanel = () => {
     navigate('/')
   }
 
-  const handleInputChange = (e) => {
-    setNewProperty({
-      ...newProperty,
-      [e.target.name]: e.target.value
-    })
-  }
-
-  const handleFileUpload = (e, tipo) => {
-    const files = Array.from(e.target.files)
-    const newDocuments = files.map(file => ({
-      id: Date.now() + Math.random(),
-      nombre: file.name,
-      tipo: tipo,
-      archivo: file,
-      fechaSubida: new Date()
-    }))
+  const handleRegistrationComplete = (contractData) => {
+    console.log('Datos listos para el contrato:', contractData)
     
-    setNewProperty({
-      ...newProperty,
-      documentos: [...newProperty.documentos, ...newDocuments]
-    })
-  }
-
-  const removeDocument = (docId) => {
-    setNewProperty({
-      ...newProperty,
-      documentos: newProperty.documentos.filter(doc => doc.id !== docId)
-    })
-  }
-
-  const handleSubmitProperty = async (e) => {
-    e.preventDefault()
-    
-    try {
-      const propertyData = {
-        direccion: newProperty.direccion,
-        folioReal: newProperty.folioReal,
-        propietarioId: user.id,
-        propietarioNombre: user.nombre,
-        descripcion: newProperty.descripcion,
-        documentos: newProperty.documentos.map(doc => ({
-          nombre: doc.nombre,
-          tipo: doc.tipo,
-          url: doc.url || ''
-        }))
+    // Aquí puedes integrar con el contrato blockchain
+    // Ejemplo de llamada al contrato:
+    /*
+    const mintProperty = async () => {
+      try {
+        // Llamar a la función mint del contrato
+        const tx = await contract.mintProperty(
+          contractData.tokenURI,           // URI de IPFS
+          contractData.carnetIdentidad,    // CI del propietario
+          contractData.description         // Descripción
+        )
+        
+        await tx.wait()
+        console.log('Propiedad minted exitosamente:', tx.hash)
+      } catch (error) {
+        console.error('Error al mint:', error)
       }
-      
-      await apiService.createPropiedad(propertyData)
-      
-      // Recargar propiedades
-      await loadPropiedades()
-      
-      // Limpiar formulario
-      setNewProperty({
-        direccion: '',
-        folioReal: '',
-        descripcion: '',
-        documentos: []
-      })
-      setShowNewPropertyForm(false)
-      
-      alert('Propiedad registrada exitosamente')
-    } catch (error) {
-      console.error('Error creando propiedad:', error)
-      alert(error.message || 'Error al registrar la propiedad')
+    }
+    
+    mintProperty()
+    */
+    
+    // Por ahora solo mostrar los datos
+    alert(`Datos preparados para el contrato:\n\nToken URI: ${contractData.tokenURI}\nCarnet: ${contractData.carnetIdentidad}\nDescripción: ${contractData.description}`)
+    
+    // Cerrar el formulario
+    setShowNewPropertyForm(false)
+    
+    // Recargar propiedades si tienes esa función
+    if (loadPropiedades) {
+      loadPropiedades()
     }
   }
 
+  // Funciones para la lista de propiedades existentes
   const getEstadoColor = (estado) => {
     switch (estado) {
       case 'EN_NOTARIA':
@@ -174,163 +137,55 @@ const PropietarioPanel = () => {
               Gestiona y da seguimiento a tus propiedades registradas
             </p>
           </div>
-          <Button 
-            onClick={() => setShowNewPropertyForm(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Propiedad
-          </Button>
+          <div className="flex space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => setShowPinataSetup(true)}
+              className="text-gray-600 border-gray-300"
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Configurar IPFS
+            </Button>
+            <Button 
+              onClick={() => setShowNewPropertyForm(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Propiedad
+            </Button>
+          </div>
         </div>
 
         {/* Formulario Nueva Propiedad */}
         {showNewPropertyForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Registrar Nueva Propiedad</CardTitle>
-              <CardDescription>
-                Completa la información y sube los documentos requeridos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitProperty} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="direccion">Dirección de la Propiedad</Label>
-                    <Input
-                      id="direccion"
-                      name="direccion"
-                      placeholder="Av. Ejemplo 123, Zona Centro"
-                      value={newProperty.direccion}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="folioReal">Folio Real</Label>
-                    <Input
-                      id="folioReal"
-                      name="folioReal"
-                      placeholder="FR-2024-001234"
-                      value={newProperty.folioReal}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
+          <div className="mb-8">
+            <PropertyRegistrationFormSimple 
+              onRegistrationComplete={handleRegistrationComplete}
+            />
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowNewPropertyForm(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="descripcion">Descripción (Opcional)</Label>
-                  <Textarea
-                    id="descripcion"
-                    name="descripcion"
-                    placeholder="Casa de dos plantas, 3 dormitorios..."
-                    value={newProperty.descripcion}
-                    onChange={handleInputChange}
-                    rows={3}
-                  />
-                </div>
-
-                {/* Subida de Documentos */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold">Documentos Requeridos</h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Cédula de Identidad</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileUpload(e, 'CI')}
-                          className="hidden"
-                          id="ci-upload"
-                        />
-                        <label htmlFor="ci-upload" className="cursor-pointer">
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">Subir CI</p>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Planos</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileUpload(e, 'PLANO')}
-                          className="hidden"
-                          id="plano-upload"
-                        />
-                        <label htmlFor="plano-upload" className="cursor-pointer">
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">Subir Planos</p>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Folio Real Original</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileUpload(e, 'FOLIO_REAL')}
-                          className="hidden"
-                          id="folio-upload"
-                        />
-                        <label htmlFor="folio-upload" className="cursor-pointer">
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">Subir Folio</p>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Lista de documentos subidos */}
-                  {newProperty.documentos.length > 0 && (
-                    <div className="space-y-2">
-                      <h5 className="font-medium">Documentos Subidos:</h5>
-                      <div className="space-y-2">
-                        {newProperty.documentos.map(doc => (
-                          <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <FileText className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm">{doc.nombre}</span>
-                              <Badge variant="outline">{doc.tipo}</Badge>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument(doc.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              Eliminar
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex space-x-4">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    Registrar Propiedad
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowNewPropertyForm(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+        {/* Configuración de Pinata */}
+        {showPinataSetup && (
+          <div className="mb-8">
+            <PinataSetup />
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPinataSetup(false)}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Lista de Propiedades */}
