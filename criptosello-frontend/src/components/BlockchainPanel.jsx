@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { Wallet, Plus, Search, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Wallet, Search, CheckCircle, Clock, FileText } from 'lucide-react';
 import blockchainService from '../utils/blockchain';
 
 const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
@@ -16,45 +14,18 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('info');
 
-  // Estados para crear propiedad
-  const [newProperty, setNewProperty] = useState({
-    to: '',
-    tokenId: '',
-    ownerInfo: '',
-    details: '',
-    legalDocsHash: ''
-  });
-
   // Estados para consultar propiedad
   const [queryTokenId, setQueryTokenId] = useState('');
   const [propertyData, setPropertyData] = useState(null);
 
   useEffect(() => {
-    // Intentar conectar automáticamente al nodo local para desarrollo
-    connectToBlockchain();
+    // El useEffect puede estar vacío por ahora o removerse completamente
   }, []);
 
   const showMessage = (text, type = 'info') => {
     setMessage(text);
     setMessageType(type);
     setTimeout(() => setMessage(''), 5000);
-  };
-
-  const connectToBlockchain = async () => {
-    try {
-      setLoading(true);
-      
-      // Intentar conectar al nodo local primero (para desarrollo)
-      const address = await blockchainService.connectToLocalNode();
-      setAccount(address);
-      setIsConnected(true);
-      showMessage('Conectado a la blockchain local', 'success');
-    } catch (error) {
-      console.error('Error conectando a blockchain:', error);
-      showMessage('Error conectando a la blockchain', 'error');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const connectWallet = async () => {
@@ -67,43 +38,6 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
     } catch (error) {
       console.error('Error conectando wallet:', error);
       showMessage('Error conectando wallet: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createProperty = async () => {
-    if (!isConnected) {
-      showMessage('Primero conecta tu wallet', 'error');
-      return;
-    }
-
-    if (!newProperty.to || !newProperty.tokenId || !newProperty.ownerInfo || !newProperty.details) {
-      showMessage('Completa todos los campos requeridos', 'error');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await blockchainService.createProperty(
-        newProperty.to,
-        parseInt(newProperty.tokenId),
-        newProperty.ownerInfo,
-        newProperty.details,
-        newProperty.legalDocsHash || ''
-      );
-      
-      showMessage('Propiedad creada exitosamente', 'success');
-      setNewProperty({
-        to: '',
-        tokenId: '',
-        ownerInfo: '',
-        details: '',
-        legalDocsHash: ''
-      });
-    } catch (error) {
-      console.error('Error creando propiedad:', error);
-      showMessage('Error creando propiedad: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -163,16 +97,13 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
 
     try {
       setLoading(true);
-      const property = await blockchainService.getProperty(parseInt(queryTokenId));
-      const owner = await blockchainService.getOwnerOf(parseInt(queryTokenId));
+      const property = await blockchainService.getPropertyInfo(parseInt(queryTokenId));
       
       setPropertyData({
         tokenId: queryTokenId,
-        owner,
-        ownerInfo: property.ownerInfo,
-        details: property.details,
-        legalDocsHash: property.legalDocsHash,
+        owner: property.owner,
         state: property.state,
+        uri: property.uri,
         stateText: blockchainService.getPropertyStateText(property.state)
       });
       
@@ -236,9 +167,6 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
             </div>
             {!isConnected && (
               <div className="space-x-2">
-                <Button onClick={connectToBlockchain} disabled={loading}>
-                  Conectar Local
-                </Button>
                 <Button onClick={connectWallet} disabled={loading} variant="outline">
                   Conectar Wallet
                 </Button>
@@ -254,78 +182,6 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
           )}
         </CardContent>
       </Card>
-
-      {/* Panel para crear propiedad (solo notarios) */}
-      {userRole === 'NOTARIA' && isConnected && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Crear Nueva Propiedad
-            </CardTitle>
-            <CardDescription>
-              Registra una nueva propiedad en la blockchain
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="to">Dirección del Propietario *</Label>
-                <Input
-                  id="to"
-                  placeholder="0x..."
-                  value={newProperty.to}
-                  onChange={(e) => setNewProperty({...newProperty, to: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="tokenId">ID del Token *</Label>
-                <Input
-                  id="tokenId"
-                  type="number"
-                  placeholder="123"
-                  value={newProperty.tokenId}
-                  onChange={(e) => setNewProperty({...newProperty, tokenId: e.target.value})}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="ownerInfo">Información del Propietario *</Label>
-              <Input
-                id="ownerInfo"
-                placeholder="Juan Pérez - CI: 12345678"
-                value={newProperty.ownerInfo}
-                onChange={(e) => setNewProperty({...newProperty, ownerInfo: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="details">Detalles de la Propiedad *</Label>
-              <Textarea
-                id="details"
-                placeholder="Casa de 2 pisos, 150m², Zona Sur, La Paz"
-                value={newProperty.details}
-                onChange={(e) => setNewProperty({...newProperty, details: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="legalDocsHash">Hash de Documentos Legales</Label>
-              <Input
-                id="legalDocsHash"
-                placeholder="QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                value={newProperty.legalDocsHash}
-                onChange={(e) => setNewProperty({...newProperty, legalDocsHash: e.target.value})}
-              />
-            </div>
-            
-            <Button onClick={createProperty} disabled={loading} className="w-full">
-              {loading ? 'Creando...' : 'Crear Propiedad'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Panel de consulta de propiedades */}
       <Card>
@@ -366,20 +222,10 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
                   <p className="font-medium">Propietario:</p>
                   <p className="text-gray-600 font-mono break-all">{propertyData.owner}</p>
                 </div>
-                <div>
-                  <p className="font-medium">Información del Propietario:</p>
-                  <p className="text-gray-600">{propertyData.ownerInfo}</p>
-                </div>
                 <div className="md:col-span-2">
-                  <p className="font-medium">Detalles:</p>
-                  <p className="text-gray-600">{propertyData.details}</p>
+                  <p className="font-medium">URI de Metadatos:</p>
+                  <p className="text-gray-600 font-mono break-all">{propertyData.uri}</p>
                 </div>
-                {propertyData.legalDocsHash && (
-                  <div className="md:col-span-2">
-                    <p className="font-medium">Hash de Documentos:</p>
-                    <p className="text-gray-600 font-mono break-all">{propertyData.legalDocsHash}</p>
-                  </div>
-                )}
               </div>
               
               {/* Botones de acción según el rol y estado */}

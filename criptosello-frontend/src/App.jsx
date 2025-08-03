@@ -194,38 +194,27 @@ const NotariaPanel = () => {
             </p>
             
             {/* Información del proceso */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-              <h3 className="text-xl font-semibold mb-4 text-green-800">
-                Proceso de Registro con Pinata Cloud
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-green-600 font-bold text-lg">1</span>
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Crear Metadatos</h4>
-                  <p className="text-sm text-gray-600">
-                    Sube documentos e imágenes a IPFS y crea metadatos completos de la propiedad
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <span className="text-blue-600">👤</span>
                 </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-blue-600 font-bold text-lg">2</span>
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Mintear NFT</h4>
-                  <p className="text-sm text-gray-600">
-                    Crear el NFT de la propiedad con estado "EN_NOTARIA" usando el contrato
-                  </p>
+                <h3 className="font-semibold text-blue-800">1. Identificación</h3>
+                <p className="text-sm text-blue-600">Conecta tu wallet notarial</p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <span className="text-green-600">📄</span>
                 </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-purple-600 font-bold text-lg">3</span>
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Validar y Registrar</h4>
-                  <p className="text-sm text-gray-600">
-                    Revisar documentación, validar y enviar a DDRR para registro oficial
-                  </p>
+                <h3 className="font-semibold text-green-800">2. Registro</h3>
+                <p className="text-sm text-green-600">Crea NFT con estado "EN NOTARÍA"</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <span className="text-purple-600">✅</span>
                 </div>
+                <h3 className="font-semibold text-purple-800">3. Validación</h3>
+                <p className="text-sm text-purple-600">Valida documentos oficialmente</p>
               </div>
             </div>
           </div>
@@ -233,8 +222,22 @@ const NotariaPanel = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <PropertyRegistrationFormSimple 
               onRegistrationComplete={(contractData) => {
-                console.log('Registro desde homepage:', contractData)
-                alert(`Propiedad registrada desde homepage:\nURI: ${contractData.tokenURI}\nCI: ${contractData.carnetIdentidad}`)
+                console.log('Registro desde notaría:', contractData)
+                // Mostrar notificación más discreta
+                if (contractData.tokenId) {
+                  const notification = document.createElement('div')
+                  notification.innerHTML = `
+                    <div class="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50">
+                      <h4 class="font-bold">✅ Propiedad Registrada</h4>
+                      <p>Token ID: ${contractData.tokenId}</p>
+                      <p>CI: ${contractData.carnetIdentidad}</p>
+                    </div>
+                  `
+                  document.body.appendChild(notification)
+                  setTimeout(() => {
+                    document.body.removeChild(notification)
+                  }, 5000)
+                }
               }}
             />
           </div>
