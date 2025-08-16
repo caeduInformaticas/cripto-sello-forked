@@ -28,11 +28,86 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
   // Estados para consultar propiedad
   const [queryTokenId, setQueryTokenId] = useState('');
   const [propertyData, setPropertyData] = useState(null);
+  const [recentProperties, setRecentProperties] = useState([]);
 
   useEffect(() => {
     // Intentar conectar automáticamente al nodo local para desarrollo
     connectToBlockchain();
   }, []);
+
+  useEffect(() => {
+    // Configurar listeners de eventos cuando esté conectado
+    if (isConnected) {
+      setupEventListeners();
+    }
+
+    // Limpiar listeners al desmontar
+    return () => {
+      blockchainService.removeAllListeners();
+    };
+  }, [isConnected]);
+
+  const setupEventListeners = () => {
+    // Escuchar cuando se registra una nueva propiedad
+    blockchainService.onPropertyRegistered((tokenId, owner, ownerInfo, details, legalDocsHash, event) => {
+      console.log('🏠 Nueva propiedad registrada:', {
+        tokenId: tokenId.toString(),
+        owner,
+        ownerInfo,
+        details
+      });
+
+      // Agregar a la lista de propiedades recientes
+      const newProperty = {
+        tokenId: tokenId.toString(),
+        owner,
+        ownerInfo,
+        details,
+        legalDocsHash,
+        timestamp: new Date(),
+        state: 0,
+        stateText: 'En Notaría'
+      };
+
+      setRecentProperties(prev => [newProperty, ...prev.slice(0, 4)]); // Mantener solo 5
+      
+      // Mostrar los detalles completos automáticamente
+      setPropertyData({
+        tokenId: tokenId.toString(),
+        owner,
+        ownerInfo,
+        details,
+        legalDocsHash,
+        state: 0,
+        stateText: 'En Notaría'
+      });
+      
+      // Auto-llenar el campo de consulta con el nuevo ID
+      setQueryTokenId(tokenId.toString());
+      
+      // Mostrar notificación con todos los detalles
+      showMessage(`🎉 Propiedad #${tokenId} creada exitosamente! Ver detalles completos abajo.`, 'success');
+    });
+
+    // Escuchar cambios de estado
+    blockchainService.onPropertyStateChanged((tokenId, newState, event) => {
+      console.log('🔄 Estado cambió:', {
+        tokenId: tokenId.toString(),
+        newState: newState.toString()
+      });
+
+      // Actualizar la lista de propiedades recientes
+      setRecentProperties(prev => 
+        prev.map(prop => 
+          prop.tokenId === tokenId.toString() 
+            ? { ...prop, state: newState, stateText: blockchainService.getPropertyStateText(newState) }
+            : prop
+        )
+      );
+
+      showMessage(`🔄 Propiedad #${tokenId} cambió a: ${blockchainService.getPropertyStateText(newState)}`, 'info');
+    });
+  };
 
   const showMessage = (text, type = 'info') => {
     setMessage(text);
@@ -407,6 +482,63 @@ const BlockchainPanel = ({ userRole = 'OBSERVADOR' }) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Panel de propiedades recientes */}
+      {recentProperties.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Propiedades Recientes
+            </CardTitle>
+            <CardDescription>
+              Propiedades creadas recientemente en esta sesión
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentProperties.map((property, index) => (
+                <div 
+                  key={`${property.tokenId}-${index}`}
+                  className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setQueryTokenId(property.tokenId.toString());
+                    queryProperty(property.tokenId);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="font-medium">Propiedad #{property.tokenId}</span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Nuevo
+                    </Badge>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    <p><span className="font-medium">Propietario:</span> {property.ownerInfo}</p>
+                    <p className="text-xs font-mono text-gray-500 mt-1">
+                      {property.owner.slice(0, 10)}...{property.owner.slice(-8)}
+                    </p>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    Haz clic para ver detalles completos
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-3 border-t text-center">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setRecentProperties([])}
+              >
+                Limpiar Lista
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
